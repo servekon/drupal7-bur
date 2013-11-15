@@ -1,0 +1,75 @@
+<?php
+// $Id: bur.install,v 1.0. 2013/05/01 23:59:15 servekon Exp $
+
+/**
+ * Implementation of hook_install()
+ */
+function bur_install() {
+	$values = array(
+		array(
+			'bur_title' => 'Name',
+			'bur_user_field' => 'name',
+			'bur_weight' => 1,
+			'bur_is_data' => 0,
+		),
+		array(
+			'bur_title' => 'Password',
+			'bur_user_field' => 'pass',
+			'bur_weight' => 2,
+			'bur_is_data' => 0,
+		),
+		array(
+			'bur_title' => 'Email',
+			'bur_user_field' => 'mail',
+			'bur_weight' => 3,
+			'bur_is_data' => 0,
+		),
+	);
+	
+	$query = db_insert('bur_fields_table')->fields(array('bur_title','bur_user_field','bur_weight','bur_is_data'));
+	
+	foreach($values as $val){
+		$query->values($val);
+	}
+	
+	$query->execute();
+}
+
+/**
+ * Implementation of hook_install()
+ */
+function bur_uninstall(){
+	variable_del('bur_fields_terminated');
+	variable_del('bur_fields_enclosed');
+	variable_del('bur_fields_escaped');
+	variable_del('bur_lines_terminated');
+	if(db_table_exists('bur_bulk_user_reg_tmp')){
+		db_drop_table('bur_bulk_user_reg_tmp');
+	}
+}
+
+/**
+ * Implementation of hook_schema()
+ * @return array of Schema API table definitions.
+ */
+function bur_schema() {
+	$schema['bur_fields_table'] = array(
+		'fields' => array(
+			'bur_id' => array('type' => 'serial', 'size' => 'big', 'not null' => TRUE, 
+				'description'=> "Field ID"),
+			'bur_title' => array('type' => 'varchar', 'size' => 'normal', 'not null' => TRUE, 'length' => 50, 
+                'description'=> "Human-friendly title"),
+			'bur_user_field' => array('type' => 'varchar', 'size' => 'normal', 'not null' => TRUE, 'length' => 50, 
+				'description'=> "The field of conformance to the field in the user table"),
+			'bur_weight' => array('type' => 'int', 'size' => 'small', 'not null' => TRUE,
+				'description'=> "The serial number of the field"),
+			'bur_is_data' => array('type' => 'int', 'size' => 'small', 'not null' => TRUE, 'length' => 50,
+				'description'=> "Whether the field will be used in array 'data'"),
+			'bur_dateizm' => array('type' => 'datetime','mysql_type' => 'timestamp', 'not null' => TRUE, 'description'=> "Date of change"),
+		),
+		'indexes' => array('bur_weight'=>array('bur_weight'),'bur_is_data'=>array('bur_is_data')),
+		'primary key' => array('bur_id')
+	);
+
+	return $schema;
+}

@@ -1,0 +1,97 @@
+# translation of bur-7.x-1.0.po to russian
+# $Id: ru.po,v 1.0 2011/02/27 16:10:10 sun Exp $
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  bur.module,v 1.0 2013/08/28 07:00:51 wed
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: bur-7.x-1.0\n"
+"POT-Creation-Date: 2013-08-28 09:00+0200\n"
+"PO-Revision-Date: 2013-08-28 23:00+0200\n"
+"Last-Translator: Konstantin Lukas\n"
+"Language-Team: Bur\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: KBabel 1.11.4\n"
+
+msgid "Bulk user registration"
+msgstr "Массовая регистрация пользователей"
+
+msgid "Customize Fields"
+msgstr "Настройка полей"
+
+msgid "The setting for the file format"
+msgstr "Настройка формата файла"
+
+msgid "Re-create a temporary table"
+msgstr "Пересоздать временную таблицу"
+
+msgid "Number of entries to be processed per pass"
+msgstr "Количество записей, обрабатываемых за один проход"
+
+msgid "Select \"No\", if you just need to create a temporary table and fill it with data."
+msgstr "Выберите \"Нет\", если нужно просто создать временную таблицу и наполнить ее данными."
+
+msgid "Registration of new users is missed."
+msgstr "Регистрация новых пользователей пропущена."
+
+msgid "No data."
+msgstr "Данных нет."
+
+msgid "Table is empty."
+msgstr "Таблица пуста."
+
+msgid "File encoding"
+msgstr "Кодировка файла"
+
+msgid "Access to Bulk user registration module"
+msgstr "Доступ к модулю ''Массовая регистация пользователей''"
+
+msgid "Administer of the Bulk user registration module"
+msgstr "Администрирование модуля ''Массовая регистация пользователей''"
+
+msgid "Additional settings for all users"
+msgstr "Дополнительные настройки для всех пользователей"
+
+msgid "Ten random records"
+msgstr "Десять случайных записей"
+
+msgid "Field of user table"
+msgstr "Поле из таблицы пользователей"
+
+msgid "Is optional field"
+msgstr "Является дополнительным полем"
+
+msgid "Name of user variable"
+msgstr "Наименование переменной пользователя"
+
+msgid "Do you want to remove a field \"%field\"?"
+msgstr "Вы действительно хотите удалить поле \"%field\"?"
+
+msgid "Field deleted."
+msgstr "Поле удалено."
+
+msgid "The field separator"
+msgstr "Разделитель полей"
+
+msgid "The fields are enclosed in"
+msgstr "Поля заключены в"
+
+msgid "Single quote"
+msgstr "Одинарная кавычка"
+
+msgid "Two single quotes"
+msgstr "Две одинарные кавычки"
+
+msgid "Double quote"
+msgstr "Двойная кавычка"
+
+msgid "The escape character"
+msgstr "Символ экранирования"
+
+msgid "Line separator"
+msgstr "Символ разделения строк"

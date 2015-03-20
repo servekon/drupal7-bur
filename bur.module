@@ -1,7 +1,4 @@
 <?php
-// $Id: bur.module,v 1.0 2013/05/01 00:30:25 servekon Exp $
-
-
 /**
  * Implementation of hook_permission
  * */
@@ -11,70 +8,69 @@ function bur_permission(){
       'title' => t('Access to Bulk user registration module'),
       'restrict access' => TRUE,
     ),
-	'administer bur' => array(
+  'administer bur' => array(
       'title' => t('Administer of the Bulk user registration module'),
       'restrict access' => TRUE,
     ),
   );
 }
 
-
 /**
  * Implementation of hook_menu
  * */
 function bur_menu() {
-	/*
-	 * Administration interface
-	 * */
-	$menu['admin/bur'] = array(
-		'title' => 'Bulk user registration',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('bur_import_form'),
-		'access arguments' => array('administer bur'),
-	);
-	
-	$menu['admin/bur/import'] = array(
-		'title' => 'Import', 
-		'type' => MENU_DEFAULT_LOCAL_TASK, 
-		'weight' => -1,
-	);
-	
-	$menu['admin/bur/fields'] = array(
-		'title' => 'Customize Fields',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('bur_sort_form'),
-		'access arguments' => array('administer bur'),
-		'type' => MENU_LOCAL_TASK,
-		'weight' => 1,
-	);
+  /*
+   * Administration interface
+   * */
+  $menu['admin/bur'] = array(
+    'title' => 'Bulk user registration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bur_import_form'),
+    'access arguments' => array('administer bur'),
+  );
+  
+  $menu['admin/bur/import'] = array(
+    'title' => 'Import', 
+    'type' => MENU_DEFAULT_LOCAL_TASK, 
+    'weight' => -1,
+  );
+  
+  $menu['admin/bur/fields'] = array(
+    'title' => 'Customize Fields',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bur_sort_form'),
+    'access arguments' => array('administer bur'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
 
-	$menu['admin/bur/fields/add'] = array(
-		'title' => 'Add field',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('bur_add_field_form'),
-		'access arguments' => array('administer bur'),
-		'type' => MENU_LOCAL_ACTION,
-		'weight' => 1,
-	);
-	
-	$menu['admin/bur/fields/del/%'] = array(
-		'title' => 'Delete field',
-		'page callback' => 'bur_del_field',
-		'page arguments' => array(4),
-		'access arguments' => array('administer bur'),
-		'type' => MENU_CALLBACK,
-		'weight' => 2,
-	);
-	
-	$menu['admin/bur/file_format'] = array(
-		'title' => 'The setting for the file format',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('bur_file_format_form'),
-		'access arguments' => array('administer bur'),
-		'type' => MENU_LOCAL_TASK,
-		'weight' => 2,
-	);
-	return $menu;
+  $menu['admin/bur/fields/add'] = array(
+    'title' => 'Add field',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bur_add_field_form'),
+    'access arguments' => array('administer bur'),
+    'type' => MENU_LOCAL_ACTION,
+    'weight' => 1,
+  );
+  
+  $menu['admin/bur/fields/del/%'] = array(
+    'title' => 'Delete field',
+    'page callback' => 'bur_del_field',
+    'page arguments' => array(4),
+    'access arguments' => array('administer bur'),
+    'type' => MENU_CALLBACK,
+    'weight' => 2,
+  );
+  
+  $menu['admin/bur/file_format'] = array(
+    'title' => 'The setting for the file format',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bur_file_format_form'),
+    'access arguments' => array('administer bur'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
+  return $menu;
 }
 
 
@@ -83,7 +79,6 @@ function bur_menu() {
  */
 function bur_theme() {
   return array(
-    // Theme function for the 'simple' example.
     'bur_sort_form' => array(
       'render element' => 'form',
     ),
@@ -94,382 +89,376 @@ function bur_theme() {
  * Import form
  * */
 function bur_import_form($form=array(), &$form_state){
-	
-	$count  = 0;
-	
-	//~ Get all language
-	$lanArr = array();
-	$langList = language_list();
-	$langArr = array(t('No'));
-	foreach($langList as $lang){
-		$langArr[$lang->language] = $lang->native;
-	}
-	
-	//~ Get timezones
-	$timeZoneList = system_time_zones();
-	array_unshift($timeZoneList, t('No'));
-	
-	//~ Get user roles
-	$userRoleList = $tblUser = array();
-	$userRoleList = user_roles();
-	array_unshift($userRoleList, t('No'));
-	
-	if(db_table_exists('bur_bulk_user_reg_tmp')){
-		$tblUser = db_select('bur_bulk_user_reg_tmp', 't')
-		->fields('t')
-		->range(0, 10)
-		->orderRandom()
-		->execute();
-		
-		foreach($tblUser as $item){
-			unset($item->random_field);
-			$rangeTmp[] = (array)$item;
-		}
-		
-		$count = db_select('bur_bulk_user_reg_tmp')
-		->countQuery()
-		->execute()
-		->fetchField();
-	}
-	
-	if($count > 0){
-		drupal_set_message(t('%time left', array('%time'=>$count)).'.', 'warning', false);
-	}
-	
-	$form['bur_bulk_user_reg_file'] = array(
-		'#type' => 'file', 
-		'#title' => t('Choose a file'), 
-		'#size' => 40,
-		'#weight' => 1,
-	);
-	
-	$form['bur_bulk_user_reg_rebuild'] = array(
-		'#type' => 'checkbox',
-		'#title' => t('Re-create a temporary table'),
-		'#return_value' => 1,
-		'#weight' => 2,
+  $count  = 0;
+  
+  //~ Get all language
+  $lanArr = array();
+  $langList = language_list();
+  $langArr = array(t('No'));
+  foreach($langList as $lang){
+    $langArr[$lang->language] = $lang->native;
+  }
+  
+  //~ Get timezones
+  $timeZoneList = system_time_zones();
+  array_unshift($timeZoneList, t('No'));
+  
+  //~ Get user roles
+  $userRoleList = $tblUser = array();
+  $userRoleList = user_roles();
+  array_unshift($userRoleList, t('No'));
+  
+  if(db_table_exists('bur_bulk_user_reg_tmp')){
+    $tblUser = db_select('bur_bulk_user_reg_tmp', 't')
+    ->fields('t')
+    ->range(0, 10)
+    ->orderRandom()
+    ->execute();
+    
+    foreach($tblUser as $item){
+      unset($item->random_field);
+      $rangeTmp[] = (array)$item;
+    }
+    
+    $count = db_select('bur_bulk_user_reg_tmp')
+    ->countQuery()
+    ->execute()
+    ->fetchField();
+  }
+  
+  if($count > 0){
+    drupal_set_message(t('%time left', array('%time'=>$count)).'.', 'warning', false);
+  }
+  
+  $form['bur_bulk_user_reg_file'] = array(
+    '#type' => 'file', 
+    '#title' => t('Choose a file'), 
+    '#size' => 40,
+    '#weight' => 1,
+  );
+  
+  $form['bur_bulk_user_reg_rebuild'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Re-create a temporary table'),
+    '#return_value' => 1,
+    '#weight' => 2,
     );
-	
-	$form['bur_bulk_user_reg_count'] = array(
-		'#type' => 'select',
-		'#title' => t('Number of entries to be processed per pass'),
-		'#options' => array(
-			0 => t('No'),
-			10 => '10',
-			100 => '100',
-			750 => '750',
-			1500 => '1500',
-			2000 => '2000',
-			2500 => '2500',
-			3000 => '3000',
-			3500 => '3500',
-			4000 => '4000',
-			4500 => '4500',
-			5000 => '5000',
-			7500 => '7500',
-			10000 => '10000',
-			15000 => '15000',
-			20000 => '20000',
-		),
-		'#default_value' => (int)(isset($_COOKIE['bur_quantity']) ? $_COOKIE['bur_quantity'] : '10000'),
-		'#description' => t('Select "No", if you just need to create a temporary table and fill it with data.'),
-		'#weight' => 3,
-	);
-	
-	$form['bur_extra'] = array(
+  
+  $form['bur_bulk_user_reg_count'] = array(
+    '#type' => 'select',
+    '#title' => t('Number of entries to be processed per pass'),
+    '#options' => array(
+      0 => t('No'),
+      10 => '10',
+      100 => '100',
+      750 => '750',
+      1500 => '1500',
+      2000 => '2000',
+      2500 => '2500',
+      3000 => '3000',
+      3500 => '3500',
+      4000 => '4000',
+      4500 => '4500',
+      5000 => '5000',
+      7500 => '7500',
+      10000 => '10000',
+      15000 => '15000',
+      20000 => '20000',
+    ),
+    '#default_value' => (int)(isset($_COOKIE['bur_quantity']) ? $_COOKIE['bur_quantity'] : '10000'),
+    '#description' => t('Select "No", if you just need to create a temporary table and fill it with data.'),
+    '#weight' => 3,
+  );
+  
+  $form['bur_extra'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Additional settings for all users'),
+    '#weight' => 5,
+    '#collapsible' => TRUE,
+    '#collapsed' =>FALSE,
+  );
+  
+  $form['bur_extra']['bur_extra_set_all_active'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Account activation'),
+    '#return_value' => 1,
+    '#default_value' => (int)(isset($_COOKIE['bur_isactive']) ? $_COOKIE['bur_isactive'] : 0),
+    '#weight' => 2,
+  );
+  
+  $form['bur_extra']['bur_extra_user_role'] = array(
+    '#type' => 'select',
+    '#title' => t('User roles and permissions'),
+    '#options' => $userRoleList,
+    '#default_value' => (int)(isset($_COOKIE['bur_user_role']) ? $_COOKIE['bur_user_role'] : 0),
+    '#weight' => 3,
+  );
+  
+  $form['bur_extra']['bur_extra_lang'] = array(
+    '#type' => 'select',
+    '#title' => t('Default language'),
+    '#options' => $langArr,
+    '#default_value' => check_plain((isset($_COOKIE['bur_lang']) ? $_COOKIE['bur_lang'] : 0)),
+    '#weight' => 4,
+  );
+  
+  $form['bur_extra']['bur_extra_timezone'] = array(
+    '#type' => 'select',
+    '#title' => t('Timezone'),
+    '#options' => $timeZoneList,
+    '#default_value' => check_plain((isset($_COOKIE['bur_timezone']) ? $_COOKIE['bur_timezone'] : 'Europe/Moscow')),
+    '#weight' => 5,
+  );
+  
+  if($count > 0){
+    $form['bur_ten_random'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Additional settings for all users'),
-      '#weight' => 5,
+      '#title' => t('Ten random records'),
+      '#weight' => 7,
       '#collapsible' => TRUE,
-      '#collapsed' =>FALSE,
+      '#collapsed' =>TRUE,
     );
-	
-	$form['bur_extra']['bur_extra_set_all_active'] = array(
-		'#type' => 'checkbox',
-		'#title' => t('Account activation'),
-		'#return_value' => 1,
-		'#default_value' => (int)(isset($_COOKIE['bur_isactive']) ? $_COOKIE['bur_isactive'] : 0),
-		'#weight' => 2,
+    
+    $form['bur_ten_random']['bur_ten_random_table'] = array(
+      '#type' => 'item',
+      '#title' => '',
+      '#prefix' => '<div>'.theme('table', array('header'=>array_keys($rangeTmp[0]),'rows'=>$rangeTmp)).'</div>',
     );
-	
-	$form['bur_extra']['bur_extra_user_role'] = array(
-		'#type' => 'select',
-		'#title' => t('User roles and permissions'),
-		'#options' => $userRoleList,
-		'#default_value' => (int)(isset($_COOKIE['bur_user_role']) ? $_COOKIE['bur_user_role'] : 0),
-		'#weight' => 3,
-    );
-	
-	$form['bur_extra']['bur_extra_lang'] = array(
-		'#type' => 'select',
-		'#title' => t('Default language'),
-		'#options' => $langArr,
-		'#default_value' => check_plain((isset($_COOKIE['bur_lang']) ? $_COOKIE['bur_lang'] : 0)),
-		'#weight' => 4,
-    );
-	
-	$form['bur_extra']['bur_extra_timezone'] = array(
-		'#type' => 'select',
-		'#title' => t('Timezone'),
-		'#options' => $timeZoneList,
-		'#default_value' => check_plain((isset($_COOKIE['bur_timezone']) ? $_COOKIE['bur_timezone'] : 'Europe/Moscow')),
-		'#weight' => 5,
-    );
-	
-	if($count > 0){
-		$form['bur_ten_random'] = array(
-		  '#type' => 'fieldset',
-		  '#title' => t('Ten random records'),
-		  '#weight' => 7,
-		  '#collapsible' => TRUE,
-		  '#collapsed' =>TRUE,
-		);
-		
-		$form['bur_ten_random']['bur_ten_random_table'] = array(
-		  '#type' => 'item',
-		  '#title' => '',
-		  '#prefix' => '<div>'.theme('table', array('header'=>array_keys($rangeTmp[0]),'rows'=>$rangeTmp)).'</div>',
-		);
-	}
-	
-	$form['submit'] = array(
-			'#type' => 'submit',
-			'#value' => t('Save and continue'),
-			'#weight' => 10,
-	);
-	
-	$form['bur_cancel'] = array(
-		'#type' => 'link',
-		'#title' => t('Cancel'),
-		'#href' => 'admin/bur',
-		'#weight' => 11,
-	);
-	
-	return $form;
+  }
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save and continue'),
+    '#weight' => 10,
+  );
+  
+  $form['bur_cancel'] = array(
+    '#type' => 'link',
+    '#title' => t('Cancel'),
+    '#href' => 'admin/bur',
+    '#weight' => 11,
+  );
+  return $form;
 }
 
 function bur_import_form_submit($form, &$form_state){
-	module_load_install('user');
-	$usFieldStuct = user_schema();
-	$usFieldStuct = $usFieldStuct['users'];
-	
-	$tblBulk 	= 'bur_bulk_user_reg_tmp';
-	$file 		= $_FILES['files']['tmp_name']['bur_bulk_user_reg_file'];
-	$tblUser 	= array();
-	$quantity	= (int)$form_state['values']['bur_bulk_user_reg_count'];
-	setcookie('bur_quantity', $quantity);
-	$recreate	= (int)$form_state['values']['bur_bulk_user_reg_rebuild'];
-	$isActive	= (int)$form_state['values']['bur_extra_set_all_active'];
-	setcookie('bur_isactive', $isActive);
-	$userRole	= (int)$form_state['values']['bur_extra_user_role'];
-	setcookie('bur_user_role', $userRole);
-	$lang		= $form_state['values']['bur_extra_lang'];
-	setcookie('bur_lang', $lang);
-	$timezone	= $form_state['values']['bur_extra_timezone'];
-	setcookie('bur_timezone', $timezone);
-	$pref		= '';
-	$termArr	= array(
-		0 => '\\t',
-		1 => ';',
-		2 => ',',
-		3 => '|',
-		4 => '^',
-	);
+  module_load_install('user');
+  $usFieldStuct = user_schema();
+  $usFieldStuct = $usFieldStuct['users'];
+  
+  $tblBulk  = 'bur_bulk_user_reg_tmp';
+  $file     = $_FILES['files']['tmp_name']['bur_bulk_user_reg_file'];
+  $tblUser  = array();
+  $quantity = (int)$form_state['values']['bur_bulk_user_reg_count'];
+  setcookie('bur_quantity', $quantity);
+  $recreate = (int)$form_state['values']['bur_bulk_user_reg_rebuild'];
+  $isActive = (int)$form_state['values']['bur_extra_set_all_active'];
+  setcookie('bur_isactive', $isActive);
+  $userRole = (int)$form_state['values']['bur_extra_user_role'];
+  setcookie('bur_user_role', $userRole);
+  $lang   = $form_state['values']['bur_extra_lang'];
+  setcookie('bur_lang', $lang);
+  $timezone = $form_state['values']['bur_extra_timezone'];
+  setcookie('bur_timezone', $timezone);
+  $pref   = '';
+  $termArr  = array(
+    0 => '\\t',
+    1 => ';',
+    2 => ',',
+    3 => '|',
+    4 => '^',
+  );
 
-	$enclArr	= array(
-		0 => '\\\'',
-		1 => '\\\'\\\'',
-		2 => '"',
-		3 => '%%',
-	);
+  $enclArr  = array(
+    0 => '\\\'',
+    1 => '\\\'\\\'',
+    2 => '"',
+    3 => '%%',
+  );
 
-	$lineTerArr	= array(
-		0 => '\\r\\n',
-		1 => '\\n',
-		2 => '\\r',
-	);
-	
-	$escdArr 	= array('\\\\');
-	
-	$schema['fields']['id'] = array('type' => 'serial', 'size' => 'big', 'not null' => TRUE, 'description'=> "Bur fields ID");
-	$burquery	= db_query('SELECT `bur_user_field`, `bur_is_data` FROM {bur_fields_table} ORDER BY `bur_weight` ASC');
-	
-	foreach($burquery as $field){
-		if($field->bur_is_data > 0){
-			$pref = 'is_data_';
-		}
-		else{
-			$pref = '';
-		}
-		$burFields[$field->bur_user_field] = $pref.$field->bur_user_field;
-		$burArrField[] = '`'.$field->bur_user_field.'`';
-		if($field->bur_is_data == 0){
-			$schema['fields'][$field->bur_user_field] = $usFieldStuct['fields'][$field->bur_user_field];
-			
-			if(isset($usFieldStuct['indexes'][$field->bur_user_field])){
-				$schema['indexes'][$field->bur_user_field] = $usFieldStuct['indexes'][$field->bur_user_field];
-			}
-		}
-		else{
-			$schema['fields'][$field->bur_user_field] = array('type' => 'varchar', 'size' => 'normal', 'not null' => TRUE, 'length' => 255);
-		}
-	}
-	
-	$schema['unique keys']['name'] = array ('name');
-	$schema['primary key'] = array('id');
-	
-	//Create table from fields config
-	if(!db_table_exists($tblBulk) or ($recreate >0 and db_table_exists($tblBulk))){
-		try{
-			db_drop_table($tblBulk);
-			db_create_table($tblBulk, $schema);
-		}
-		catch(Exception $e){
-			watchdog_exception('error', $e);
-			drupal_set_message(t('Error'), 'warning'); return false;
-		}
-	}
-	elseif(!empty($file)){
-		db_truncate($tblBulk)->execute();
-	}
-	
-	//Import data from CSV file
-	if(!empty($file)){
-		try{
-			$terminated = (int)variable_get('bur_fields_terminated', '\t');
-			$enclosed	= (int)variable_get('bur_fields_enclosed', '"');
-			$escaped	= (int)variable_get('bur_fields_escaped', '\\');
-			$line_term	= (int)variable_get('bur_lines_terminated', '\r\n');
-			
-			$q = 'LOAD DATA LOCAL INFILE :file INTO TABLE {'.check_plain($tblBulk).'} CHARACTER SET utf8 FIELDS TERMINATED BY  \''.$termArr[$terminated].'\' ENCLOSED BY  \''.$enclArr[$enclosed].'\' ESCAPED BY  \''.$escdArr[$escaped].'\' LINES TERMINATED BY  \''.$lineTerArr[$line_term].'\' ('.implode(',', $burArrField).')';
-			db_query($q, array(':file'=>$file), array(PDO::MYSQL_ATTR_LOCAL_INFILE => 1));
-		}
-		catch(Exception $e){
-			watchdog_exception('error', $e);
-			drupal_set_message('When importing file the error occurred. More information in '.l('syslog','admin/reports/dblog').'.'.'<br />'.$e->getMessage(), 'error', FALSE); return false;
-		}
-	}
-	
-	//~ debug($q);
-	//Clear importing data
-	db_query('DELETE a.* FROM {'.$tblBulk.'} as a INNER JOIN {users} as u on a.name=u.name');
-	
-	$tblUser = db_select($tblBulk, 't')
-	->fields('t')
-	->range(0, $quantity)
-	->execute();
-	
-	$count  = $tblUser->rowCount();
-	
-	$newAcc = (object)array('is_new'=>true);
-	
-	if($quantity == 0){
-		drupal_set_message(t('Registration of new users is missed.'), 'warning', FALSE); return false;
-	}
-	
-	if($count > 0){
-		foreach($tblUser as $val){
-			$newUser = array();
-			foreach($burFields as $bKey=>$bval){
-				if(substr($bval, 0, 7) == 'is_data'){
-					$newUser['data'][$bKey] = $val->$bKey;
-				}
-				else{
-					$newUser[$bKey] = $val->$bKey;
-				}
-			}
-			unset($bKey,$bVal);
-			
-			if(!empty($isActive)){
-				$newUser['status'] 						= $isActive;
-			}
-			if(!empty($lang)){
-				$newUser['language'] 					= check_plain($lang);
-			}
-			if(!empty($timezone)){
-				$newUser['timezone'] 					= check_plain($timezone);
-			}
-			if(!empty($userRole)){
-				$newUser['roles']						= array($userRole => $userRole);
-			}
-			$operations[] = array('user_save', array($newAcc, $newUser));
-		}
-		unset($val,$newUser,$tblUser);
-		
-		$batch = array(
-			'operations' => $operations,
-		);
-		batch_set($batch);
-	}
-	else{
-		drupal_set_message(t('Table is empty.'), 'error', FALSE); return false;
-	}
+  $lineTerArr = array(
+    0 => '\\r\\n',
+    1 => '\\n',
+    2 => '\\r',
+  );
+  
+  $escdArr  = array('\\\\');
+  
+  $schema['fields']['id'] = array('type' => 'serial', 'size' => 'big', 'not null' => TRUE, 'description'=> "Bur fields ID");
+  $burquery = db_query('SELECT `bur_user_field`, `bur_is_data` FROM {bur_fields_table} ORDER BY `bur_weight` ASC');
+  
+  foreach($burquery as $field){
+    if($field->bur_is_data > 0){
+      $pref = 'is_data_';
+    }
+    else{
+      $pref = '';
+    }
+    $burFields[$field->bur_user_field] = $pref.$field->bur_user_field;
+    $burArrField[] = '`'.$field->bur_user_field.'`';
+    if($field->bur_is_data == 0){
+      $schema['fields'][$field->bur_user_field] = $usFieldStuct['fields'][$field->bur_user_field];
+      if(isset($usFieldStuct['indexes'][$field->bur_user_field])){
+        $schema['indexes'][$field->bur_user_field] = $usFieldStuct['indexes'][$field->bur_user_field];
+      }
+    }
+    else{
+      $schema['fields'][$field->bur_user_field] = array('type' => 'varchar', 'size' => 'normal', 'not null' => TRUE, 'length' => 255);
+    }
+  }
+  
+  $schema['unique keys']['name'] = array ('name');
+  $schema['primary key'] = array('id');
+  
+  //Create table from fields config
+  if(!db_table_exists($tblBulk) or ($recreate >0 and db_table_exists($tblBulk))){
+    try{
+      db_drop_table($tblBulk);
+      db_create_table($tblBulk, $schema);
+    }
+    catch(Exception $e){
+      watchdog_exception('error', $e);
+      drupal_set_message(t('Error'), 'warning'); return false;
+    }
+  }
+  elseif(!empty($file)){
+    db_truncate($tblBulk)->execute();
+  }
+  
+  //~ Import data from CSV file
+  if(!empty($file)){
+    try{
+      $terminated = (int)variable_get('bur_fields_terminated', '\t');
+      $enclosed = (int)variable_get('bur_fields_enclosed', '"');
+      $escaped  = (int)variable_get('bur_fields_escaped', '\\');
+      $line_term  = (int)variable_get('bur_lines_terminated', '\r\n');
+      
+      $q = 'LOAD DATA LOCAL INFILE :file INTO TABLE {'.check_plain($tblBulk).'} CHARACTER SET utf8 FIELDS TERMINATED BY  \''.$termArr[$terminated].'\' ENCLOSED BY  \''.$enclArr[$enclosed].'\' ESCAPED BY  \''.$escdArr[$escaped].'\' LINES TERMINATED BY  \''.$lineTerArr[$line_term].'\' ('.implode(',', $burArrField).')';
+      db_query($q, array(':file'=>$file), array(PDO::MYSQL_ATTR_LOCAL_INFILE => 1));
+    }
+    catch(Exception $e){
+      watchdog_exception('error', $e);
+      drupal_set_message('When importing file the error occurred. More information in '.l('syslog','admin/reports/dblog').'.'.'<br />'.$e->getMessage(), 'error', FALSE); return false;
+    }
+  }
+  
+  //~ Clear importing data
+  db_query('DELETE a.* FROM {'.$tblBulk.'} as a INNER JOIN {users} as u on a.name=u.name');
+  
+  $tblUser = db_select($tblBulk, 't')
+  ->fields('t')
+  ->range(0, $quantity)
+  ->execute();
+  
+  $count  = $tblUser->rowCount();
+  $newAcc = (object)array('is_new'=>true);
+  
+  if($quantity == 0){
+    drupal_set_message(t('Registration of new users is missed.'), 'warning', FALSE); return false;
+  }
+  
+  if($count > 0){
+    foreach($tblUser as $val){
+      $newUser = array();
+      foreach($burFields as $bKey=>$bval){
+        if(substr($bval, 0, 7) == 'is_data'){
+          $newUser['data'][$bKey] = $val->$bKey;
+        }
+        else{
+          $newUser[$bKey] = $val->$bKey;
+        }
+      }
+      unset($bKey,$bVal);
+      
+      if(!empty($isActive)){
+        $newUser['status']  = $isActive;
+      }
+      if(!empty($lang)){
+        $newUser['language'] = check_plain($lang);
+      }
+      if(!empty($timezone)){
+        $newUser['timezone'] = check_plain($timezone);
+      }
+      if(!empty($userRole)){
+        $newUser['roles'] = array($userRole => $userRole);
+      }
+      $operations[] = array('user_save', array($newAcc, $newUser));
+    }
+    unset($val,$newUser,$tblUser);
+    
+    $batch = array(
+      'operations' => $operations,
+    );
+    batch_set($batch);
+  }
+  else{
+    drupal_set_message(t('Table is empty.'), 'error', FALSE); return false;
+  }
 }
 
 /**
  * Manage fields form
  * */
 function bur_sort_form($form_state){
-	$form['bur_fields']['#tree'] = true;
-	
-	$yesno = array(0=>t('No'), 1=>t('Yes'));
-	
-	$result = db_query('SELECT bur_id, bur_title, bur_user_field, bur_is_data,bur_weight FROM {bur_fields_table} ORDER BY bur_weight ASC');
-	
-	foreach($result as $field){
-		$form['bur_fields'][$field->bur_id]=array(
-			'user_field' => array(
-				'#markup' => check_plain($field->bur_user_field)
-			),
-			'title' => array(
-				'#type' => 'textfield',
-				'#default_value' => check_plain($field->bur_title),
-				'#size' => 20,
-				'#maxlength' => 255,
-			),
-			'is_data' =>array(
-				'#markup' => $yesno[$field->bur_is_data]
-			),
-			'actions' =>array(
-				'#markup' => l(t('Delete'), 'admin/bur/fields/del/'.$field->bur_id)
-			),
-			'weight' => array(
-				'#type' => 'weight',
-				'#title' => t('Weight'),
-				'#default_value' => $field->bur_weight,
-				'#delta' => 10,
-				'#title-display' => 'invisible',
-			),
-		);
-	}
-	
-	$form['actions'] = array('#type' => 'actions');
-	$form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save settings'));
-	return $form;
+  $form['bur_fields']['#tree'] = true;
+  $yesno = array(
+    0=>t('No'),
+    1=>t('Yes'),
+  );
+  
+  $result = db_query('SELECT bur_id, bur_title, bur_user_field, bur_is_data,bur_weight FROM {bur_fields_table} ORDER BY bur_weight ASC');
+  
+  foreach($result as $field){
+    $form['bur_fields'][$field->bur_id]=array(
+      'user_field' => array(
+        '#markup' => check_plain($field->bur_user_field)
+      ),
+      'title' => array(
+        '#type' => 'textfield',
+        '#default_value' => check_plain($field->bur_title),
+        '#size' => 20,
+        '#maxlength' => 255,
+      ),
+      'is_data' =>array(
+        '#markup' => $yesno[$field->bur_is_data]
+      ),
+      'actions' =>array(
+        '#markup' => l(t('Delete'), 'admin/bur/fields/del/'.$field->bur_id)
+      ),
+      'weight' => array(
+        '#type' => 'weight',
+        '#title' => t('Weight'),
+        '#default_value' => $field->bur_weight,
+        '#delta' => 10,
+        '#title-display' => 'invisible',
+      ),
+    );
+  }
+  
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array('#type' => 'submit', '#value' => t('Save settings'));
+  return $form;
 }
 
 
 function theme_bur_sort_form($variables) {
   $form = $variables['form'];
 
-  // Initialize the variable which will store our table rows.
+  //~ Initialize the variable which will store our table rows.
   $rows = array();
 
-  // Iterate over each element in our $form['example_items'] array.
+  //~ Iterate over each element in our $form['example_items'] array.
   foreach (element_children($form['bur_fields']) as $id) {
-
-    
     $form['bur_fields'][$id]['weight']['#attributes']['class'] = array('bur-field-weight');
-
     $rows[] = array(
       'data' => array(
-        // Add our 'user_field' column.
+        //~ Add our 'user_field' column.
         drupal_render($form['bur_fields'][$id]['user_field']),
-        // Add our 'title' column.
+        //~ Add our 'title' column.
         drupal_render($form['bur_fields'][$id]['title']),
         drupal_render($form['bur_fields'][$id]['is_data']),
         drupal_render($form['bur_fields'][$id]['actions']),
-        // Add our 'weight' column.
+        //~ Add our 'weight' column.
         drupal_render($form['bur_fields'][$id]['weight']),
       ),
       'class' => array('draggable'),
@@ -477,21 +466,19 @@ function theme_bur_sort_form($variables) {
   }
 
   $header = array(t('Field of user table'), t('Title'), t('Is optional field'), t('Actions'), t('Weight'));
-
   $table_id = 'bur-fields-table';
 
-  // We can render our tabledrag table for output.
+  //~ We can render our tabledrag table for output.
   $output = theme('table', array(
-    'header' => $header,
-    'rows' => $rows,
-    'attributes' => array('id' => $table_id),
-  ));
+      'header' => $header,
+      'rows' => $rows,
+      'attributes' => array('id' => $table_id),
+    )
+  );
 
-  // And then render any remaining form elements (such as our submit button).
+  //~ And then render any remaining form elements (such as our submit button).
   $output .= drupal_render_children($form);
-
   drupal_add_tabledrag($table_id, 'order', 'sibling', 'bur-field-weight');
-
   return $output;
 }
 
@@ -499,15 +486,15 @@ function theme_bur_sort_form($variables) {
  * Bulk user registration sort form submit
  * */
 function bur_sort_form_submit($form, &$form_state){
-	foreach ($form_state['values']['bur_fields'] as $id => $field) {
-		db_update('bur_fields_table')
-		->fields(array(
-				'bur_title' => check_plain($field['title']),
-				'bur_weight'=> $field['weight']
-		))
-		->condition('bur_id', (int)$id)
-		->execute();
-	}
+  foreach ($form_state['values']['bur_fields'] as $id => $field) {
+    db_update('bur_fields_table')
+    ->fields(array(
+        'bur_title' => check_plain($field['title']),
+        'bur_weight'=> $field['weight']
+    ))
+    ->condition('bur_id', (int)$id)
+    ->execute();
+  }
 }
 
 
@@ -515,234 +502,227 @@ function bur_sort_form_submit($form, &$form_state){
  * Form for add new field
  * */
 function bur_add_field_form($form=array(), &$form_state){
-	
-	$fields 	= $weightArr = array();
-	
-	for($i=0; $i<20; $i++){
-		$weightArr[$i] = $i;
-	}
-	 	
-	try{
-		$getFields 	= db_query('SHOW COLUMNS FROM {users}');
-		$extFields	= db_query('SELECT `bur_user_field` as field FROM {bur_fields_table}');
-		$maxWeight	= db_query('SELECT MAX(`bur_weight`) as m FROM {bur_fields_table}')->fetchObject();
-		
-		foreach ($getFields as $field){
-			$fields[$field->Field] = $field->Field;
-		}
-		foreach($extFields as $extField){
-			$noFields[$extField->field] = $extField->field;
-		}
-		//Allow add only previously unmounted fields
-		$diffFields	= array_diff($fields, $noFields);
-	}
-	catch(Exception $e){
-		watchdog_exception('error', $e);
-		drupal_set_message(t('Error'), 'warning'); return false;
-	}
-	
-	$form['user_field']=array(
-		'#type' => 'select',
-		'#title' => t('Field of user table'),
-		'#required' => TRUE,
-		'#options' => $diffFields,
-		'#ajax' => array(
-			'callback' => 'bur_is_data_callback',
-			'wrapper' => 'user-data-wrapper',
-			'event' => 'change',
-			'method' => 'replace',
-		),
-	);
-	
-	$form['data_field']=array(
-		'#prefix' => '<div id="user-data-wrapper">',
-		'#suffix' => '</div>',
-	);
-	
-	if(isset($form_state['input']['user_field']) and $form_state['input']['user_field'] == 'data'){
-		$form['data_field'] = array(
-			'#type' => 'textfield',
-			'#title' => t('Name of user variable'),
-			'#required' => TRUE,
-			'#size' => 50,
-			'#prefix' => '<div id="user-data-wrapper">',
-			'#suffix' => '</div>',
-		);
-	}
+  $fields   = $weightArr = array();
+  for($i=0; $i<20; $i++){
+    $weightArr[$i] = $i;
+  }
+  try{
+    $getFields  = db_query('SHOW COLUMNS FROM {users}');
+    $extFields  = db_query('SELECT `bur_user_field` as field FROM {bur_fields_table}');
+    $maxWeight  = db_query('SELECT MAX(`bur_weight`) as m FROM {bur_fields_table}')->fetchObject();
+    
+    foreach ($getFields as $field){
+      $fields[$field->Field] = $field->Field;
+    }
+    foreach($extFields as $extField){
+      $noFields[$extField->field] = $extField->field;
+    }
+    //~ Allow add only previously unmounted fields
+    $diffFields = array_diff($fields, $noFields);
+  }
+  catch(Exception $e){
+    watchdog_exception('error', $e);
+    drupal_set_message(t('Error'), 'warning'); return false;
+  }
+  
+  $form['user_field']=array(
+    '#type' => 'select',
+    '#title' => t('Field of user table'),
+    '#required' => TRUE,
+    '#options' => $diffFields,
+    '#ajax' => array(
+      'callback' => 'bur_is_data_callback',
+      'wrapper' => 'user-data-wrapper',
+      'event' => 'change',
+      'method' => 'replace',
+    ),
+  );
+  
+  $form['data_field']=array(
+    '#prefix' => '<div id="user-data-wrapper">',
+    '#suffix' => '</div>',
+  );
+  
+  if(isset($form_state['input']['user_field']) and $form_state['input']['user_field'] == 'data'){
+    $form['data_field'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Name of user variable'),
+      '#required' => TRUE,
+      '#size' => 50,
+      '#prefix' => '<div id="user-data-wrapper">',
+      '#suffix' => '</div>',
+    );
+  }
 
-	$form['title']=array(
-		'#type' => 'textfield',
-		'#title' => t('Title'),
-		'#required' => TRUE,
-		'#size' => 50,
-	);
-	
-	$form['weight']=array(
-		'#type' => 'select',
-		'#title' => t('Weight'),
-		'#required' => TRUE,
-		'#default_value' => ($maxWeight->m+1),
-		'#options' => $weightArr,
-	);
-	
-	$form['submit']=array(
-		'#type' => 'submit',
-		'#value' => t('Add field'),
-	);
-	$form['bur_cancel'] = array(
-		'#type' => 'link',
-		'#title' => t('Cancel'),
-		'#href' => 'admin/bur',
-	);
-	return $form;
+  $form['title']=array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#required' => TRUE,
+    '#size' => 50,
+  );
+  
+  $form['weight']=array(
+    '#type' => 'select',
+    '#title' => t('Weight'),
+    '#required' => TRUE,
+    '#default_value' => ($maxWeight->m+1),
+    '#options' => $weightArr,
+  );
+  
+  $form['submit']=array(
+    '#type' => 'submit',
+    '#value' => t('Add field'),
+  );
+  $form['bur_cancel'] = array(
+    '#type' => 'link',
+    '#title' => t('Cancel'),
+    '#href' => 'admin/bur',
+  );
+  return $form;
 }
 
 /**
  * Ajax function for choose type field
  * */
 function bur_is_data_callback($form, $form_state){
-	return $form['data_field'];
+  return $form['data_field'];
 }
 
 function bur_add_field_form_submit($form, &$form_state){
-	form_state_values_clean($form_state);
-	
-	$q 		= $form_state['values'];
-	$isData = 0;
-	$field	= check_plain($q['user_field']);
-	
-	if(!empty($q['data_field'])){
-		$isData = 1;
-		$field	= check_plain($q['data_field']);
-	}
-	
-	try{
-		$ins = db_insert('bur_fields_table')->fields(array(
-			'bur_title' => $q['title'],
-			'bur_user_field' => $field,
-			'bur_weight' => (int)$q['weight'],
-			'bur_is_data' => $isData,
-		))->execute();
-		drupal_set_message(t('Field added.'), 'status'); return true;
-	}
-	catch(Exception $e){
-		watchdog_exception('error', $e);
-		drupal_set_message(t('Error'), 'warning'); return false;
-	}
+  form_state_values_clean($form_state);
+  
+  $q    = $form_state['values'];
+  $isData = 0;
+  $field  = check_plain($q['user_field']);
+  
+  if(!empty($q['data_field'])){
+    $isData = 1;
+    $field  = check_plain($q['data_field']);
+  }
+  
+  try{
+    $ins = db_insert('bur_fields_table')->fields(array(
+      'bur_title' => $q['title'],
+      'bur_user_field' => $field,
+      'bur_weight' => (int)$q['weight'],
+      'bur_is_data' => $isData,
+    ))->execute();
+    drupal_set_message(t('Field added.'), 'status'); return true;
+  }
+  catch(Exception $e){
+    watchdog_exception('error', $e);
+    drupal_set_message(t('Error'), 'warning'); return false;
+  }
 }
 
 /**
  * Delete field
  * */
 function bur_del_field($id){
-	return drupal_render(drupal_get_form('bur_del_field_form', $id));
+  return drupal_render(drupal_get_form('bur_del_field_form', $id));
 }
 
 /**
  * Delete field form
  * */
 function bur_del_field_form($form=array(), &$form_state, $id){
-	
-	$field = db_query('SELECT `bur_title` FROM {bur_fields_table} WHERE bur_id = :id LIMIT 0,1', array(':id'=>$id))->fetchObject();
-	
-	$form['del_id']=array(
-		'#type' => 'hidden',
-		'#value' => (int)$id,
-	);
-	
-	$form['confirm']=array(
-		'#type' => 'item',
-		'#markup' => t('Do you want to remove a field "%field"?', array('%field'=>(isset($field->bur_title) ? $field->bur_title : ''))),
-	);
-	
-	$form['submit'] = array(
-			'#type' => 'submit',
-			'#value' => t('Yes'),
-	);
-	
-	$form['bur_cancel'] = array(
-		'#type' => 'link',
-		'#title' => t('Cancel'),
-		'#href' => 'admin/bur',
-	);
-	
-	return $form;
+  $field = db_query('SELECT `bur_title` FROM {bur_fields_table} WHERE bur_id = :id LIMIT 0,1', array(':id'=>$id))->fetchObject();
+  
+  $form['del_id']=array(
+    '#type' => 'hidden',
+    '#value' => (int)$id,
+  );
+  
+  $form['confirm']=array(
+    '#type' => 'item',
+    '#markup' => t('Do you want to remove a field "%field"?', array('%field'=>(isset($field->bur_title) ? $field->bur_title : ''))),
+  );
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Yes'),
+  );
+  
+  $form['bur_cancel'] = array(
+    '#type' => 'link',
+    '#title' => t('Cancel'),
+    '#href' => 'admin/bur',
+  );
+  
+  return $form;
 }
 
 /**
  * Delete field form submit
  * */
 function bur_del_field_form_submit($form, &$form_state){
-	$id = $form_state['values']['del_id'];
-	try{
-		db_delete('bur_fields_table')->condition('bur_id', $id)->execute();
-		drupal_set_message(t('Field deleted.'));
-	}
-	catch(Exception $e){
-		watchdog_exception('error', $e);
-		drupal_set_message(t('Error'), 'warning'); return false;
-	}
-	drupal_goto('admin/bur/fields');
+  $id = $form_state['values']['del_id'];
+  try{
+    db_delete('bur_fields_table')->condition('bur_id', $id)->execute();
+    drupal_set_message(t('Field deleted.'));
+  }
+  catch(Exception $e){
+    watchdog_exception('error', $e);
+    drupal_set_message(t('Error'), 'warning'); return false;
+  }
+  drupal_goto('admin/bur/fields');
 }
 
 /**
  * Seettings of file format
  * */
 function bur_file_format_form($form=array()){
-	$form['bur_fields_terminated']=array(
-		'#type' => 'select',
-		'#title' => t('The field separator'),
-		'#default_value' => (int)variable_get('bur_fields_terminated', 0),
-		'#size' => 1,
-		'#options' => array(
-			0 => 'TAB',
-			1 => ';',
-			2 => ',',
-			3 => '|',
-			4 => '^',
-		),
-		//'#description' => t('Possible values: ').l('[TAB]', '#', array('attributes'=>array('onclick'=>'javascript:jQuery("#edit-bur-fields-terminated").val("\\\\t"); return false;'))),
-		'#required' => TRUE,
-	);
-	//ESCAPED
-	$form['bur_fields_enclosed']=array(
-		'#type' => 'select',
-		'#title' => t('The fields are enclosed in'),
-		'#default_value' => (int)variable_get('bur_fields_enclosed', 0),
-		'#size' => 1,
-		'#options' => array(
-			0 => '\' ('.t('Single quote').')',
-			1 => '\'\' ('.t('Two single quotes').')',
-			2 => '" ('.t('Double quote').')',
-			3 => '%%',
-		),
-		//'#description' => t('Set zero if empty'),
-		'#required' => TRUE,
-	);
-	
-	$form['bur_fields_escaped']=array(
-		'#type' => 'select',
-		'#title' => t('The escape character'),
-		'#default_value' => (int)variable_get('bur_fields_escaped', 0),
-		'#size' => 1,
-		'#options' => array(
-			0 => '\\',
-		),
-		'#required' => TRUE,
-	);
-	
-	$form['bur_lines_terminated']=array(
-		'#type' => 'select',
-		'#title' => t('Line separator'),
-		'#default_value' => (int)variable_get('bur_lines_terminated', 0),
-		'#size' => 1,
-		'#options' => array(
-			0 => '\\r\\n',
-			1 => '\\n',
-			2 => '\\r',
-		),
-		'#required' => TRUE,
-	);
-	
-	return system_settings_form($form);
+  $form['bur_fields_terminated']=array(
+    '#type' => 'select',
+    '#title' => t('The field separator'),
+    '#default_value' => (int)variable_get('bur_fields_terminated', 0),
+    '#size' => 1,
+    '#options' => array(
+      0 => 'TAB',
+      1 => ';',
+      2 => ',',
+      3 => '|',
+      4 => '^',
+    ),
+    '#required' => TRUE,
+  );
+  //~ ESCAPED
+  $form['bur_fields_enclosed']=array(
+    '#type' => 'select',
+    '#title' => t('The fields are enclosed in'),
+    '#default_value' => (int)variable_get('bur_fields_enclosed', 0),
+    '#size' => 1,
+    '#options' => array(
+      0 => '\' ('.t('Single quote').')',
+      1 => '\'\' ('.t('Two single quotes').')',
+      2 => '" ('.t('Double quote').')',
+      3 => '%%',
+    ),
+    '#required' => TRUE,
+  );
+  
+  $form['bur_fields_escaped']=array(
+    '#type' => 'select',
+    '#title' => t('The escape character'),
+    '#default_value' => (int)variable_get('bur_fields_escaped', 0),
+    '#size' => 1,
+    '#options' => array(
+      0 => '\\',
+    ),
+    '#required' => TRUE,
+  );
+  
+  $form['bur_lines_terminated']=array(
+    '#type' => 'select',
+    '#title' => t('Line separator'),
+    '#default_value' => (int)variable_get('bur_lines_terminated', 0),
+    '#size' => 1,
+    '#options' => array(
+      0 => '\\r\\n',
+      1 => '\\n',
+      2 => '\\r',
+    ),
+    '#required' => TRUE,
+  );
+  return system_settings_form($form);
 }
